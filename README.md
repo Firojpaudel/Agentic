@@ -2,7 +2,7 @@
 
 A rigorous, modular engineering laboratory for learning, building, and shipping production-grade Agentic Systems from first principles.
 
-Reference: [Agentic Systems Atlas](Agentic%20Systems%20Atlas.html)
+Reference: Agentic Systems Atlas (Curated open-source guide)
 
 ---
 

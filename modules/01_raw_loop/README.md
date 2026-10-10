@@ -71,9 +71,48 @@ Implement `RawAgent.run(prompt: str, max_turns: int = 10)`:
 
 ---
 
-## 4. Acceptance Criteria
+## 4. Zero-Cost Free Provider Cheatsheet
+
+All code in this repository uses the standard `openai` Python SDK. You can switch between any of these 4 free providers by simply changing `base_url`, `api_key`, and `model`:
+
+```python
+from openai import OpenAI
+
+# Option A: Groq (Recommended - Free Tier, blazing fast tool calling)
+client = OpenAI(
+    base_url="https://api.groq.com/openai/v1",
+    api_key=os.getenv("GROQ_API_KEY"),
+)
+model = "llama-3.3-70b-versatile"
+
+# Option B: Google Gemini (Free Tier via OpenAI endpoint)
+client = OpenAI(
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    api_key=os.getenv("GEMINI_API_KEY"),
+)
+model = "gemini-2.0-flash"
+
+# Option C: OpenRouter (Free models)
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+)
+model = "meta-llama/llama-3.3-70b-instruct:free"
+
+# Option D: Local Ollama (100% Free, Offline, No API key needed)
+client = OpenAI(
+    base_url="http://localhost:11434/v1",
+    api_key="ollama",  # dummy key
+)
+model = "qwen2.5-coder:7b"
+```
+
+---
+
+## 5. Acceptance Criteria
 
 You have mastered this module when:
 - Your agent can solve multi-step problems (e.g., "Find the largest file in the current directory, count its words, and calculate the square root of that count") autonomously.
 - Your agent does not crash when a tool throws an unhandled exception; it reads the error observation and tries an alternative path.
 - You can explain exactly how tool schemas, arguments, and role="tool" messages are structured over the wire.
+
