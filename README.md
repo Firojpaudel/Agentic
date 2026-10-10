@@ -2,7 +2,7 @@
 
 A rigorous, modular engineering laboratory for learning, building, and shipping production-grade Agentic Systems from first principles.
 
-Reference: Agentic Systems Atlas (Curated open-source guide)
+Reference: Agentic Systems Atlas (Curated open-source guide) | [System Knowledge Graph](docs/knowledge_graph.md)
 
 ---
 
@@ -20,9 +20,10 @@ Frameworks (LangChain, CrewAI, AutoGen) often hide the real failure modes of age
 
 ```
 Agentic/
-├── Agentic Systems Atlas.html         # Curated atlas of 59 repos, 11 tracks, and papers
+├── docs/knowledge_graph.md            # Persistent architecture map & knowledge graph
 ├── pyproject.toml                     # Python dependencies
 ├── .env.example                       # Local and free-tier API configurations
+
 ├── README.md                          # Master roadmap and tracking
 │
 ├── modules/
