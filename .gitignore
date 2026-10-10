@@ -54,3 +54,6 @@ logs/
 hf_cache/
 
 *.html
+
+# Agent Workspace & Local Instructions
+AGENTS.md
