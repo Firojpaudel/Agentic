@@ -1,0 +1,103 @@
+{
+  "project": "Agentic Systems: Zero to Production",
+  "repository": "Firojpaudel/Agentic",
+  "version": "0.1.0",
+  "last_updated": "2026-10-10T23:37:00+05:45",
+  "current_stage": {
+    "module_id": "02_orchestration",
+    "module_name": "Module 02: Orchestration & State Graphs",
+    "status": "IN_PROGRESS",
+    "focus": "Typed State Graphs, Triage Router, Specialist Agent Handoffs, and Human-in-the-Loop (HITL) Checkpoints",
+    "next_deliverables": [
+      "Define typed state models (Pydantic / TypedDict)",
+      "Build TriageRouter node and routing logic",
+      "Implement AppointmentSpecialist and TicketingSpecialist sub-agents",
+      "Implement Human-in-the-Loop (HITL) pause/resume approval checkpoint",
+      "Unit tests for state transitions and handoffs"
+    ]
+  },
+  "modules_progression": {
+    "01_raw_loop": {
+      "name": "Raw Loop (Zero-framework ReAct)",
+      "status": "COMPLETED",
+      "shipped_artifacts": [
+        "modules/01_raw_loop/src/agent.py (RawAgent ReAct loop)",
+        "modules/01_raw_loop/src/tools.py (ToolRegistry, calculate, read_file, run_command)",
+        "modules/01_raw_loop/tests/test_loop.py (Safe execution & schema tests)",
+        "modules/01_raw_loop/README.md"
+      ],
+      "tests_passing": true
+    },
+    "02_orchestration": {
+      "name": "Typed State Graphs & Handoffs",
+      "status": "IN_PROGRESS",
+      "shipped_artifacts": [
+        "modules/02_orchestration/README.md"
+      ],
+      "tests_passing": false
+    },
+    "03_protocols_mcp": {
+      "name": "Model Context Protocol (FastMCP)",
+      "status": "PLANNED",
+      "shipped_artifacts": [],
+      "tests_passing": false
+    },
+    "04_harness_memory": {
+      "name": "Long-Horizon Context & Tiered Memory",
+      "status": "PLANNED",
+      "shipped_artifacts": [],
+      "tests_passing": false
+    },
+    "05_durability_gateway": {
+      "name": "Durability (Temporal) & Resilience Gateway",
+      "status": "PLANNED",
+      "shipped_artifacts": [],
+      "tests_passing": false
+    },
+    "06_observability_evals": {
+      "name": "Tracing (Langfuse) & Trajectory Evals (Inspect AI)",
+      "status": "PLANNED",
+      "shipped_artifacts": [],
+      "tests_passing": false
+    },
+    "07_serving_optimization": {
+      "name": "Serving Economics & Prefix Caching (vLLM / SGLang)",
+      "status": "PLANNED",
+      "shipped_artifacts": [],
+      "tests_passing": false
+    },
+    "08_production_platform": {
+      "name": "Production Capstone: Voice-Driven Appointment & Ticketing",
+      "status": "PLANNED",
+      "shipped_artifacts": [],
+      "tests_passing": false
+    }
+  },
+  "shared_infrastructure": {
+    "console": {
+      "file": "shared/console.py",
+      "status": "COMPLETED",
+      "capabilities": ["Colored traces", "Panel rendering", "Observation formatting", "Markdown outputs"]
+    },
+    "config": {
+      "file": "shared/config.py",
+      "status": "PLANNED",
+      "capabilities": ["Unified provider settings for Ollama, Groq, Gemini"]
+    }
+  },
+  "capstone_target": {
+    "domain": "Voice-Driven Hospital Appointment Scheduling & Ticketing Assistant",
+    "key_capabilities": [
+      "Doctor schedule lookup & conflict-free booking",
+      "Human-in-the-loop confirmation before database mutation",
+      "Support ticketing categorization & urgency triage",
+      "Streaming STT -> Agent State Machine -> Streaming TTS"
+    ]
+  },
+  "architectural_decisions": [
+    "ADR-001: Zero-cost access first (Ollama qwen2.5-coder / free-tier APIs)",
+    "ADR-002: Closed-loop error feedback (tools return observations, never crash unhandled)",
+    "ADR-003: Contract-driven outputs (clean structured markdown traces)",
+    "ADR-004: Modular standalone packages per stage"
+  ]
+}
