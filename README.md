@@ -68,7 +68,7 @@ You do not need paid API credits to complete this curriculum:
 
 ## 5. Progress Checklist
 
-- [ ] Module 01: Raw Loop and Primitives
+- [x] Module 01: Raw Loop and Primitives
 - [ ] Module 02: Orchestration and State Graphs
 - [ ] Module 03: Protocol Layer and FastMCP
 - [ ] Module 04: Context Compaction and Tiered Memory
@@ -76,3 +76,22 @@ You do not need paid API credits to complete this curriculum:
 - [ ] Module 06: Sandboxed Evals and Observability
 - [ ] Module 07: Prefix Caching and Serving
 - [ ] Module 08: Production Capstone Platform
+
+---
+
+## 6. Shipped Components and Architecture
+
+### Module 01: Raw ReAct Agent Loop
+- **Safe Tool Registry (`modules/01_raw_loop/src/tools.py`)**: Automatic OpenAI function calling JSON schema generation from Python type hints and docstrings.
+- **Deterministic Tools**:
+  - `calculate`: Regex-whitelisted safe math evaluator.
+  - `read_file`: Line-buffered file reader with context-window truncation.
+  - `run_command`: Subprocess shell execution with 10s timeout and output limits.
+- **Agent Loop (`modules/01_raw_loop/src/agent.py`)**:
+  - Pure Python while-loop without external agent framework bloat.
+  - Pydantic serialization via `model_dump(exclude_none=True)` for tool calls.
+  - Closed-loop error feedback: catches `JSONDecodeError` and execution exceptions, returning them as observations for self-correction.
+  - Strict system prompt contract to enforce concise, non-conversational engineering responses.
+- **Centralized Terminal UI (`shared/console.py`)**: Reusable terminal formatting across all modules with colorized turn traces, tool dispatches, observations, and rendered Markdown tables.
+- **Test Suite (`modules/01_raw_loop/tests/test_loop.py`)**: 100% passing tests for tool schemas, safe execution, and error boundaries.
+

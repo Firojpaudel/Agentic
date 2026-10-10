@@ -3,18 +3,21 @@ name = "agentic-systems"
 version = "0.1.0"
 description = "Hands-on, zero-to-production engineering curriculum for Agentic Systems"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11, <3.15"
 dependencies = [
     "pydantic>=2.9.0",
     "python-dotenv>=1.0.0",
     "rich>=13.7.0",
     "httpx>=0.27.0",
+    "openai>=1.50.0",
+    "pytest>=8.0.0",
 ]
+
 
 [project.optional-dependencies]
 # Module 01: Core Loop & Tool Calling
 m01 = [
-    "openai>=1.50.0",  # standard client used for OpenAI, Groq, Ollama compatible endpoints
+    "openai>=1.50.0",
 ]
 
 # Module 02: Orchestration & State Machines
@@ -45,7 +48,7 @@ m05 = [
 # Module 06: Observability & Evaluation
 m06 = [
     "langfuse>=2.50.0",
-    "openllmetry>=0.1.0",
+    "traceloop-sdk>=0.30.0",
     "arize-phoenix>=4.0.0",
     "inspect-ai>=0.3.50",
 ]
@@ -60,6 +63,12 @@ all = [
     "litellm>=1.50.0",
     "langfuse>=2.50.0",
     "inspect-ai>=0.3.50",
+]
+
+[tool.uv]
+package = false
+override-dependencies = [
+    "huggingface-hub",
 ]
 
 [tool.pytest.ini_options]
