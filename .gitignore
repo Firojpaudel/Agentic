@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment & Secrets
+.env
+.env.local
+*.pem
+*.key
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing & Evals
+.pytest_cache/
+.coverage
+htmlcov/
+inspect_log/
+.inspect/
+
+# Observability & Local Traces
+.langfuse/
+phoenix/
+logs/
+*.log
+
+# Model weights & caches
+.cache/
+hf_cache/
