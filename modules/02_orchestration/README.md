@@ -1,18 +1,27 @@
-# Module 02: Orchestration & State Graphs
+# Module 02: Orchestration and State Graphs
 
-> *"Frameworks hide failure modes; state machines expose them. Know state transitions deeply before delegating control."*
+> "Know one graph-based framework deeply. Skim the rest to map the design space."
 
 ---
 
-## 1. Architectural Overview
+## 1. Objectives
 
-Module 01 introduced the raw, unconstrained ReAct loop. While flexible, a single linear loop struggles as complexity grows:
-- **No Boundary Guardrails**: Tool selection space grows unwieldy for a single model prompt.
-- **Uncontrolled Mutation**: High-risk operations (database writes, financial charges, patient bookings) can be executed without supervision.
-- **No Recoverable State**: If a long-running workflow crashes or awaits human input, linear while-loops cannot safely serialize and pause execution.
+- Move from unconstrained loops to typed, deterministic state graphs.
+- Understand how graph abstractions contrast with raw procedural loops (Pydantic contracts vs LangGraph state machines, cycles, and interrupts).
+- Implement explicit sub-agent handoffs (Triage Router to domain Specialist Agents).
+- Build production-grade Human-in-the-Loop (HITL) checkpoints to safely intercept mutating actions before execution.
 
-**Module 02 solves this through a Typed StateGraph:**
-A directed graph of specialist sub-agents, deterministic intent routing, and Human-in-the-Loop (HITL) checkpoints.
+---
+
+## 2. Key Repositories to Read Line-by-Line
+
+- **pydantic/pydantic-ai** (https://github.com/pydantic/pydantic-ai): Study dependency injection, strict validation, and typed agent contracts.
+- **langchain-ai/langgraph** (https://github.com/langchain-ai/langgraph): Study state transitions, cycles, and checkpoint persistence.
+- **openai/openai-agents-python** (https://github.com/openai/openai-agents-python): Study minimal agent handoffs, guardrail primitives, and swarm routing.
+
+---
+
+## 3. Architecture & State Graph Blueprint
 
 ```mermaid
 graph TD
@@ -41,9 +50,7 @@ graph TD
     style Rejection fill:#f57c00,stroke:#e65100,color:#fff
 ```
 
----
-
-## 2. Core Components
+### Component Inventory
 
 | Component | File | Responsibility |
 | :--- | :--- | :--- |
@@ -56,7 +63,22 @@ graph TD
 
 ---
 
-## 3. Human-in-the-Loop (HITL) Checkpoint Mechanics
+## 4. Hands-On Exercises
+
+1. **Build a Type-Safe Triage System**:
+   - Implement `triage_router_node` to classify incoming user utterances into typed domain intents (`appointment`, `ticketing`, `general`).
+   - Route deterministically to specialist sub-agents without prompt pollution.
+
+2. **Implement Human-in-the-Loop (HITL) Checkpoints**:
+   - For high-risk or mutating actions (reserving clinical slots, filing critical IT outages), halt graph execution and serialize a checkpoint.
+   - Resume execution with human feedback (`approved=True/False` + reviewer notes).
+
+3. **Benchmark Latency Overhead**:
+   - Measure the compute overhead added by the typed graph machinery versus a raw procedural loop.
+
+---
+
+## 5. Human-in-the-Loop (HITL) Mechanics
 
 In production agentic architectures, automated agents **must never execute high-risk or irreversible mutations** (such as updating hospital records, filing critical outages, or charging cards) without an approval gateway.
 
@@ -73,14 +95,12 @@ state.add_message("user", "Book Dr. Sarah Chen on 2026-10-15 at 09:00 for patien
 paused_state, is_interrupted = graph.run(state)
 
 assert is_interrupted is True
-print(paused_state.pending_action.description)
-# -> "Book consultation for patient Mark Peterson with Dr. Sarah Chen on 2026-10-15 at 09:00"
 
 # 2. Human supervisor approves
 resumed_state, _ = graph.resume(
     session_id=paused_state.session_id,
     approved=True,
-    reviewer_notes="Insurance verified"
+    reviewer_notes="Medical record and insurance verified"
 )
 print(resumed_state.final_output)
 # -> "Booking Confirmed: APT-20261015-0900 | Patient: Mark Peterson ..."
@@ -88,21 +108,29 @@ print(resumed_state.final_output)
 
 ---
 
-## 4. Latency & Framework Overhead
+## 6. Framework Overhead Benchmark
 
-Running `python modules/02_orchestration/src/benchmark.py` yields the following profile:
+Running `python modules/02_orchestration/src/benchmark.py` yields the following performance profile:
 
 | Metric | Raw Procedural Baseline | Typed StateGraph Engine |
 | :--- | :--- | :--- |
-| **Average Latency per step** | ~1.5 µs | ~35 µs |
-| **Transition Overhead** | Baseline | ~33.5 µs |
+| **Average Latency per step** | ~0.17 µs | ~19.48 µs |
+| **Transition Overhead** | Baseline | ~19.31 µs |
 | **Impact on LLM Operations** | 0.00% | < 0.01% (LLM inference takes 150,000–500,000 µs) |
 
 > **Conclusion**: The architectural guarantees of typed contracts, transition auditing, and interruptible checkpoints cost microsecond-level overhead while eliminating unconstrained failure modes.
 
 ---
 
-## 5. Running Tests & Demos
+## 7. Acceptance Criteria
+
+- [x] You can explain what abstractions a state machine gives you over a raw loop, and what overhead it introduces (~19 µs).
+- [x] You have built a working multi-agent graph with checkpoints, pause/resume approval gates, and state recovery.
+- [x] All 8 unit tests in `tests/test_graph.py` pass deterministically offline at $0 cost.
+
+---
+
+## 8. Running Tests & Interactive Demo
 
 ```bash
 # Run deterministic unit tests
