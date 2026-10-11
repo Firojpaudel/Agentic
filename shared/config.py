@@ -62,28 +62,35 @@ class Settings(BaseModel):
         """
         prov = (preferred_provider or "").lower()
 
-        if prov == ProviderType.GROQ or (not preferred_provider and self.groq_api_key):
+        # Groq (Free tier)
+        if (prov == ProviderType.GROQ or not preferred_provider) and self.groq_api_key:
             return LLMConfig(
                 provider=ProviderType.GROQ,
                 model=self.groq_model,
                 base_url=self.groq_base_url,
-                api_key=self.groq_api_key or "EMPTY",
+                api_key=self.groq_api_key,
             )
-        elif prov == ProviderType.GEMINI or (not preferred_provider and self.gemini_api_key):
+
+        # Gemini (Google AI Studio Free tier)
+        if (prov == ProviderType.GEMINI or not preferred_provider) and self.gemini_api_key:
             return LLMConfig(
                 provider=ProviderType.GEMINI,
                 model=self.gemini_model,
                 base_url=self.gemini_base_url,
-                api_key=self.gemini_api_key or "EMPTY",
+                api_key=self.gemini_api_key,
             )
-        elif prov == ProviderType.OPENROUTER or (not preferred_provider and self.openrouter_api_key):
+
+        # OpenRouter (Free models)
+        if (prov == ProviderType.OPENROUTER or not preferred_provider) and self.openrouter_api_key:
             return LLMConfig(
                 provider=ProviderType.OPENROUTER,
                 model=self.openrouter_model,
                 base_url=self.openrouter_base_url,
-                api_key=self.openrouter_api_key or "EMPTY",
+                api_key=self.openrouter_api_key,
             )
-        elif prov == ProviderType.OLLAMA or (not preferred_provider):
+
+        # Local Ollama (100% Free offline fallback)
+        if prov == ProviderType.OLLAMA or not preferred_provider:
             return LLMConfig(
                 provider=ProviderType.OLLAMA,
                 model=self.ollama_model,
