@@ -8,50 +8,52 @@ This document is the persistent memory and architecture map for the Agentic Syst
 
 ```mermaid
 graph TD
-    subgraph UserInterface [Input and Voice Layer]
-        VI[Voice Input / Audio Stream] --> STT[Speech to Text]
-        TI[Terminal / CLI Input] --> SharedUI[shared.console]
-        STT --> ST[State Input]
+    subgraph UserInterface ["Input and Voice Layer"]
+        VI["Voice Audio Stream"] --> STT["Speech-to-Text"]
+        TI["Terminal / CLI Input"] --> SharedUI["shared.console"]
+        STT --> ST["State Input"]
         TI --> ST
     end
 
-    subgraph OrchestrationLayer [Module 02: State Graph]
-        ST --> TG[Triage Node]
-        TG -->|Booking Intent| BA[Appointment Specialist]
-        TG -->|Meeting Intent| MA[Meeting Specialist]
-        TG -->|Support Intent| TA[Ticketing Specialist]
-        TG -->|General Coding| CA[Code / Math Specialist]
+    subgraph OrchestrationLayer ["Module 02: State Graph"]
+        ST --> TG["Triage Router Node"]
+        TG -->|Booking Intent| BA["Appointment<br/>Specialist"]
+        TG -->|Meeting Intent| MA["Meeting<br/>Specialist"]
+        TG -->|Support Intent| TA["Ticketing<br/>Specialist"]
+        TG -->|General Coding| CA["Code & Math<br/>Specialist"]
     end
 
-    subgraph ToolsAndProtocols [Module 01 and Module 03: MCP Tools]
-        TR[ToolRegistry]
-        BA -->|Book / Check Slots| HT[Hospital Booking Tool]
-        MA -->|Generate Links| GM[Google Meet / Calendar Tool]
-        TA -->|Create / Update| TT[Ticketing Tool]
-        CA -->|Exec / Compute| CT[calculate / run_command / read_file]
+    subgraph ToolsAndProtocols ["Module 01 & 03: Tools & MCP"]
+        TR["Tool Registry"]
+        BA -->|Book / Check Slots| HT["Hospital Booking<br/>Tool"]
+        MA -->|Generate Links| GM["Calendar & Meet<br/>Tool"]
+        TA -->|Create / Update| TT["Ticketing Tool"]
+        CA -->|Exec / Compute| CT["calculate /<br/>run_command"]
         TR -.-> HT
         TR -.-> GM
         TR -.-> TT
         TR -.-> CT
     end
 
-    subgraph SafetyAndDurability [Module 02 and Module 05: HITL & Resilience]
-        HT -->|Critical Action| HITL[Human Approval Checkpoint]
+    subgraph SafetyAndDurability ["Module 02 & 05: HITL & Resilience"]
+        HT -->|Critical Action| HITL["Human Approval<br/>Checkpoint"]
         TT -->|Critical Action| HITL
-        HITL -->|Approved| COMMIT[Execute External API]
-        HITL -->|Rejected| FEEDBACK[Self-Correction Loop]
-        COMMIT --> MEM[Module 04: Tiered Memory]
+        HITL -->|Approved| COMMIT["Execute External<br/>API"]
+        HITL -->|Rejected| FEEDBACK["Self-Correction<br/>Loop"]
+        COMMIT --> MEM["Module 04:<br/>Tiered Memory"]
     end
 
-    subgraph OutputLayer [Voice and Text Output]
-        MEM --> SYNTH[Final Synthesis]
-        SYNTH --> TTS[Text to Speech]
-        SYNTH --> OUT[shared.console Markdown]
+    subgraph OutputLayer ["Voice and Text Output"]
+        MEM --> SYNTH["Final Synthesis"]
+        SYNTH --> TTS["Text-to-Speech<br/>Engine"]
+        SYNTH --> OUT["shared.console<br/>Markdown"]
     end
 
     style CT fill:#2e7d32,stroke:#1b5e20,color:#fff
     style TR fill:#2e7d32,stroke:#1b5e20,color:#fff
     style SharedUI fill:#2e7d32,stroke:#1b5e20,color:#fff
+    style HITL fill:#d32f2f,stroke:#b71c1c,color:#fff
+    style COMMIT fill:#2e7d32,stroke:#1b5e20,color:#fff
 ```
 
 ---

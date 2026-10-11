@@ -16,25 +16,25 @@ A directed graph of specialist sub-agents, deterministic intent routing, and Hum
 
 ```mermaid
 graph TD
-    Start([User Request]) --> Triage[Triage Router Node]
+    Start(["User Request"]) --> Triage["Triage Router Node"]
     
-    Triage -->|Intent: Appointment| AptNode[Appointment Specialist Node]
-    Triage -->|Intent: Ticketing| TckNode[Ticketing Specialist Node]
-    Triage -->|Intent: General| GenNode[General Inquiries Node]
+    Triage -->|Intent: Appointment| AptNode["Appointment<br/>Specialist Node"]
+    Triage -->|Intent: Ticketing| TckNode["Ticketing<br/>Specialist Node"]
+    Triage -->|Intent: General| GenNode["General Inquiries<br/>Node"]
     
-    AptNode -->|Availability Query| EndNode([Final Response])
-    AptNode -->|Booking Request| CheckConflict{Scheduling Conflict?}
-    CheckConflict -->|Yes| ConflictFeedback[Suggest Alternative Slots] --> EndNode
-    CheckConflict -->|No| HITLGate1{Action Proposal: PENDING}
+    AptNode -->|Availability Query| EndNode(["Final Response"])
+    AptNode -->|Booking Request| CheckConflict{"Scheduling<br/>Conflict?"}
+    CheckConflict -->|Yes| ConflictFeedback["Suggest Alternative<br/>Slots"] --> EndNode
+    CheckConflict -->|No| HITLGate1{"Action Proposal:<br/>PENDING"}
     
-    TckNode -->|Low/Med Severity| AutoFile[Auto-File Support Ticket] --> EndNode
-    TckNode -->|High/Critical Severity| HITLGate2{Action Proposal: PENDING}
+    TckNode -->|Low/Med Severity| AutoFile["Auto-File Support<br/>Ticket"] --> EndNode
+    TckNode -->|High/Critical Severity| HITLGate2{"Action Proposal:<br/>PENDING"}
     
-    HITLGate1 -->|Checkpoint Saved| HumanPause[⏸️ Interrupted for Human Approval]
+    HITLGate1 -->|Checkpoint Saved| HumanPause["⏸️ Interrupted for<br/>Human Approval"]
     HITLGate2 -->|Checkpoint Saved| HumanPause
     
-    HumanPause -->|Resume: Approved| Executor[Execute Action Node] --> EndNode
-    HumanPause -->|Resume: Rejected| Rejection[Rejection Handler & Feedback] --> EndNode
+    HumanPause -->|Resume: Approved| Executor["Execute Action<br/>Node"] --> EndNode
+    HumanPause -->|Resume: Rejected| Rejection["Rejection Handler<br/>& Feedback"] --> EndNode
 
     style HumanPause fill:#d32f2f,stroke:#b71c1c,color:#fff
     style Executor fill:#2e7d32,stroke:#1b5e20,color:#fff
