@@ -70,7 +70,7 @@ You do not need paid API credits to complete this curriculum:
 ## 5. Progress Checklist
 
 - [x] Module 01: Raw Loop and Primitives
-- [ ] Module 02: Orchestration and State Graphs
+- [x] Module 02: Orchestration and State Graphs
 - [ ] Module 03: Protocol Layer and FastMCP
 - [ ] Module 04: Context Compaction and Tiered Memory
 - [ ] Module 05: Durability and LLM Gateway
@@ -81,6 +81,10 @@ You do not need paid API credits to complete this curriculum:
 ---
 
 ## 6. Shipped Components and Architecture
+
+### Shared Infrastructure
+- **Console Engine (`shared/console.py`)**: Unified terminal presentation engine with colorized traces, tool logs, observation formatting, and Markdown rendering.
+- **Unified Provider Config (`shared/config.py`)**: Zero-cost configuration manager for Groq, Gemini Flash, OpenRouter free models, and local Ollama.
 
 ### Module 01: Raw ReAct Agent Loop
 - **Safe Tool Registry (`modules/01_raw_loop/src/tools.py`)**: Automatic OpenAI function calling JSON schema generation from Python type hints and docstrings.
@@ -93,6 +97,18 @@ You do not need paid API credits to complete this curriculum:
   - Pydantic serialization via `model_dump(exclude_none=True)` for tool calls.
   - Closed-loop error feedback: catches `JSONDecodeError` and execution exceptions, returning them as observations for self-correction.
   - Strict system prompt contract to enforce concise, non-conversational engineering responses.
-- **Centralized Terminal UI (`shared/console.py`)**: Reusable terminal formatting across all modules with colorized turn traces, tool dispatches, observations, and rendered Markdown tables.
 - **Test Suite (`modules/01_raw_loop/tests/test_loop.py`)**: 100% passing tests for tool schemas, safe execution, and error boundaries.
+
+### Module 02: Orchestration & State Graphs
+- **Typed State Contracts (`modules/02_orchestration/src/state.py`)**: Immutable schemas for `AgentState`, `ActionProposal`, `ApprovalStatus`, and domain slots.
+- **StateGraph Engine (`modules/02_orchestration/src/graph.py`)**: First-principles directed graph runner with conditional branch routing and checkpoint pause/resume mechanics.
+- **Domain Tools & Stores (`modules/02_orchestration/src/domain_tools.py`)**: In-memory `HospitalScheduler` and `TicketStore` with conflict detection and automated severity classification.
+- **Specialist Multi-Agent System (`modules/02_orchestration/src/specialists.py`, `engine.py`)**:
+  - `TriageRouter`: Domain intent classification (`appointment`, `ticketing`, `general`).
+  - `AppointmentSpecialist`: Slot search and conflict-aware booking proposals.
+  - `TicketingSpecialist`: Automated filing for low/medium tickets and supervisor escalation for critical/high-severity issues.
+  - `ActionExecutor` & `RejectionHandler`: Execution or rollback based on human reviewer feedback.
+- **Latency Benchmark (`modules/02_orchestration/src/benchmark.py`)**: Sub-20 µs framework overhead benchmark verifying zero perceptible lag on agent loops.
+- **Interactive Runner (`modules/02_orchestration/run.py`)**: Rich terminal demonstration of live state transitions and HITL workflows.
+- **Test Suite (`modules/02_orchestration/tests/test_graph.py`)**: 8 deterministic unit tests verifying routing, conflict detection, and pause/resume checkpoints.
 
