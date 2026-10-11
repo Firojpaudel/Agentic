@@ -8,13 +8,15 @@ from __future__ import annotations
 import copy
 from typing import Callable, Dict, List, Optional, Tuple
 try:
-    from .state import AgentState, ApprovalStatus
+    from .state import AgentState, ApprovalStatus, NodeName, Role
 except ImportError:
-    from state import AgentState, ApprovalStatus
+    from state import AgentState, ApprovalStatus, NodeName, Role
 
 
 NodeFunc = Callable[[AgentState], AgentState]
 RouterFunc = Callable[[AgentState], str]
+
+DEFAULT_MAX_STEPS: int = 15
 
 
 class StateGraph:
@@ -23,7 +25,7 @@ class StateGraph:
     Implements the explicit state-machine pattern without hiding mechanics.
     """
 
-    def __init__(self, entry_node: str = "triage"):
+    def __init__(self, entry_node: str = NodeName.TRIAGE):
         self.entry_node: str = entry_node
         self.nodes: Dict[str, NodeFunc] = {}
         self.conditional_edges: Dict[str, RouterFunc] = {}
@@ -63,7 +65,7 @@ class CompiledGraph:
     def run(
         self,
         initial_state: AgentState,
-        max_steps: int = 15
+        max_steps: int = DEFAULT_MAX_STEPS
     ) -> Tuple[AgentState, bool]:
         """
         Execute graph until termination ('__end__'), step limit, or HITL interruption.
@@ -76,13 +78,13 @@ class CompiledGraph:
         while steps < max_steps:
             steps += 1
 
-            if current == "__end__":
+            if current == NodeName.END:
                 state.is_completed = True
-                state.log_transition("__end__")
+                state.log_transition(NodeName.END)
                 return state, False
 
             if current not in self.graph.nodes:
-                state.add_message("system", f"Runtime Error: Node '{current}' not found in graph.")
+                state.add_message(Role.SYSTEM, f"Runtime Error: Node '{current}' not found in graph.")
                 state.is_completed = True
                 return state, False
 
@@ -104,9 +106,9 @@ class CompiledGraph:
                 current = self.graph.fixed_edges[current]
             else:
                 # Default to completion if no edges defined
-                current = "__end__"
+                current = NodeName.END
 
-        state.add_message("system", f"Exceeded maximum execution steps ({max_steps}).")
+        state.add_message(Role.SYSTEM, f"Exceeded maximum execution steps ({max_steps}).")
         state.is_completed = True
         return state, False
 
@@ -132,13 +134,11 @@ class CompiledGraph:
         )
         state.pending_action.reviewer_notes = reviewer_notes
 
-        # Route after human decision
-        if approved:
-            # Transition to action executor node
-            state.current_node = "execute_action"
-        else:
-            # Transition to correction / rejection handler
-            state.current_node = "handle_rejection"
+        # Route after human decision via typed NodeName enums
+        state.current_node = (
+            NodeName.EXECUTE_ACTION if approved else NodeName.HANDLE_REJECTION
+        )
 
         # Resume execution loop
         return self.run(state)
+
