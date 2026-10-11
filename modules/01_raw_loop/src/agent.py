@@ -1,38 +1,80 @@
 """
-Module 01: Raw ReAct Agent Loop
-Write your own implementation here following modules/01_raw_loop/README.md.
+Module 01: The Raw Loop (Zero-Framework ReAct).
+Grounded in open-source reference implementations:
+- SWE-agent/mini-swe-agent (Minimal stateful loop, output truncation, safety boundaries)
+- huggingface/smolagents (Dynamic tool schema discovery & serialization)
+- anthropics/claude-cookbooks (Closed-loop tool error observations and recovery)
 """
+from __future__ import annotations
 
 import os
 import json
+from typing import Any, Optional, Tuple
 from dotenv import load_dotenv
 from openai import OpenAI
 from shared.console import agent_console
+from shared.config import settings
 from .tools import registry, ToolRegistry
 
 load_dotenv()
 
+DEFAULT_MAX_TURNS: int = 10
+
 
 class RawAgent:
+    """
+    Pure Python ReAct agent without external framework abstractions.
+    Enforces turn budgets, schema casting, repetitive loop detection,
+    and closed-loop observation recovery.
+    """
+
     def __init__(
         self,
-        model: str = None,
-        base_url: str = "https://api.groq.com/openai/v1",
-        api_key: str = None,
-        tools: ToolRegistry = None,
-        max_turns: int = 10,
+        model: Optional[str] = None,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        tools: Optional[ToolRegistry] = None,
+        max_turns: int = DEFAULT_MAX_TURNS,
         verbose: bool = True,
+        provider: Optional[str] = None,
     ):
-        self.model = model or os.getenv("GROQ_MODEL")
         self.tools = tools or registry
         self.max_turns = max_turns
         self.verbose = verbose
-        self.client = OpenAI(
-            base_url=base_url,
-            api_key=api_key or os.getenv("GROQ_API_KEY"),
-        )
+
+        # Resolve client and model strictly from environment variables via Settings
+        if base_url and api_key:
+            self.model = model or os.getenv("LLM_MODEL") or os.getenv("GROQ_MODEL")
+            self.client = OpenAI(base_url=base_url, api_key=api_key)
+            return
+
+        client, cfg = settings.get_client(preferred_provider=provider)
+        self.client = client
+        self.model = model or cfg.model
+
+    def _dispatch_tool(self, call: Any, is_loop: bool) -> str:
+        """
+        Execute single tool call with loop guard and closed-loop JSON recovery.
+        Flattens execution into linear guard clauses.
+        """
+        func_name = call.function.name
+        func_args_raw = call.function.arguments
+
+        if is_loop:
+            return (
+                f"WARNING: Identical tool call '{func_name}' repeated with arguments {func_args_raw}. "
+                "You appear to be in a loop. Re-evaluate your strategy or choose an alternate tool."
+            )
+
+        try:
+            args = json.loads(func_args_raw)
+        except json.JSONDecodeError as err:
+            return f"Error: Arguments were not valid JSON: {err}"
+
+        return self.tools.execute(func_name, args)
 
     def run(self, user_prompt: str) -> str:
+        """Execute the stateful ReAct while-loop until completion or turn exhaustion."""
         messages = [
             {
                 "role": "system",
@@ -49,6 +91,7 @@ class RawAgent:
         ]
 
         schemas = self.tools.get_schemas()
+        last_tool_call: Optional[Tuple[str, str]] = None
 
         for turn in range(1, self.max_turns + 1):
             if self.verbose:
@@ -69,24 +112,26 @@ class RawAgent:
             message = response.choices[0].message
             messages.append(message.model_dump(exclude_none=True))
 
-            # No tool calls means the LLM has synthesized its final answer
+            # Guard clause: no tool calls indicates final answer generated
             if not message.tool_calls:
                 if self.verbose:
                     agent_console.print_completed()
                 return message.content or "[Empty response]"
 
-            # Run each requested tool and append observation
+            # Execute tool invocations
             for call in message.tool_calls:
                 func_name = call.function.name
-                if self.verbose:
-                    agent_console.print_tool_call(func_name, call.function.arguments)
+                func_args_raw = call.function.arguments
 
-                try:
-                    args = json.loads(call.function.arguments)
-                except json.JSONDecodeError as err:
-                    result = f"Error: Arguments were not valid JSON: {err}"
-                else:
-                    result = self.tools.execute(func_name, args)
+                if self.verbose:
+                    agent_console.print_tool_call(func_name, func_args_raw)
+
+                # Repetitive loop detection (mini-swe-agent pattern)
+                current_call = (func_name, func_args_raw.strip())
+                is_loop = (current_call == last_tool_call)
+                last_tool_call = current_call
+
+                result = self._dispatch_tool(call, is_loop=is_loop)
 
                 if self.verbose:
                     agent_console.print_observation(result)
