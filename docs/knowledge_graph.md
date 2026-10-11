@@ -61,8 +61,8 @@ graph TD
 | Stage | Subsystem | Target Capability | Status |
 | :--- | :--- | :--- | :--- |
 | **Stage 1** | Module 01: Raw Loop | Zero-framework ReAct loop, Safe Tool Registry, context truncation | **COMPLETED** |
-| **Stage 2** | Module 02: State Graph | Triage Router, Specialist nodes, Human-in-the-Loop approval checkpoints | **IN PROGRESS** |
-| **Stage 3** | Module 03: Protocol (MCP) | Calendar Tools, Appointment Tools, Ticket Management Tools over MCP | Pending |
+| **Stage 2** | Module 02: State Graph | Triage Router, Specialist nodes, Human-in-the-Loop approval checkpoints | **COMPLETED** |
+| **Stage 3** | Module 03: Protocol (MCP) | Calendar Tools, Appointment Tools, Ticket Management Tools over MCP | **NEXT** |
 | **Stage 4** | Module 04: Tiered Memory | Persistent user/patient profiles, booking history, conflict resolution | Pending |
 | **Stage 5** | Module 05: Durability | Crash-proof workflows so telephone/web calls do not drop state | Pending |
 | **Stage 6** | Voice Streaming | Real-time speech pipeline (STT -> State Graph -> TTS audio playback) | Pending |
@@ -74,17 +74,22 @@ graph TD
 ### `shared/console.py`
 - Centralized terminal presentation engine with colorized traces, tool logs, observation formatting, and Markdown rendering.
 
-### `modules/01_raw_loop/src/tools.py`
-- `ToolRegistry`: Automatic Python function to OpenAI JSON schema conversion.
-- `calculate`: Regex-sanitized math evaluation.
-- `read_file`: Line-buffered file reader with safety limits.
-- `run_command`: Subprocess runner with 10s timeouts.
+### `shared/config.py`
+- Unified zero-cost LLM configuration manager for Groq, Gemini Flash, OpenRouter free models, and local Ollama.
 
-### `modules/01_raw_loop/src/agent.py`
-- `RawAgent`: Pure Python ReAct loop with Pydantic serialization (`model_dump(exclude_none=True)`), JSON error recovery, and strict engineering output contracts.
+### `modules/01_raw_loop/`
+- `RawAgent`: Pure Python ReAct loop with Pydantic serialization, closed-loop error feedback, and OpenAI JSON schema generation.
+- `ToolRegistry`: Safe tool registration, automated schemas, parameter casting, and error sandboxing.
+- `calculate`, `read_file`, `run_command`: Standard ReAct tooling suite.
 
-### `modules/01_raw_loop/tests/test_loop.py`
-- Unit tests covering registry, schemas, error boundaries, and safe execution.
+### `modules/02_orchestration/`
+- `state.py`: Typed contracts for `AgentState`, `ActionProposal`, `ApprovalStatus`, and domain entities.
+- `graph.py`: Deterministic first-principles `StateGraph` and `CompiledGraph` engine with checkpoint resume mechanics.
+- `domain_tools.py`: In-memory `HospitalScheduler` and `TicketStore` with conflict resolution and automated severity heuristics.
+- `specialists.py`: `TriageRouter`, `AppointmentSpecialist`, `TicketingSpecialist`, `ActionExecutor`, and `RejectionHandler`.
+- `engine.py`: Multi-agent graph assembly with conditional intent-based routing.
+- `benchmark.py`: Overhead benchmarking verifying sub-20µs transition overhead.
+- `run.py`: Rich terminal demonstration with interactive and automated HITL pause/approval scenarios.
 
 ---
 

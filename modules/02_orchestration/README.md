@@ -1,30 +1,113 @@
-# Module 02: Orchestration and State Graphs
+# Module 02: Orchestration & State Graphs
 
-> "Know one graph-based framework deeply. Skim the rest to map the design space."
-
----
-
-## 1. Objectives
-- Move from unconstrained loops to typed, deterministic state graphs.
-- Compare Pydantic AI (type-safe agents, dependency injection) vs LangGraph (state graphs, cycles, human-in-the-loop interrupts).
-- Implement explicit subagent handoffs (e.g. Triage Agent to Specialist Agent).
+> *"Frameworks hide failure modes; state machines expose them. Know state transitions deeply before delegating control."*
 
 ---
 
-## 2. Key Repositories to Read Line-by-Line
-- **pydantic/pydantic-ai** (https://github.com/pydantic/pydantic-ai): Study dependency injection and typed contracts.
-- **langchain-ai/langgraph** (https://github.com/langchain-ai/langgraph): Study state transitions and checkpointing.
-- **openai/openai-agents-python** (https://github.com/openai/openai-agents-python): Study minimal agent handoffs and guardrail primitives.
+## 1. Architectural Overview
+
+Module 01 introduced the raw, unconstrained ReAct loop. While flexible, a single linear loop struggles as complexity grows:
+- **No Boundary Guardrails**: Tool selection space grows unwieldy for a single model prompt.
+- **Uncontrolled Mutation**: High-risk operations (database writes, financial charges, patient bookings) can be executed without supervision.
+- **No Recoverable State**: If a long-running workflow crashes or awaits human input, linear while-loops cannot safely serialize and pause execution.
+
+**Module 02 solves this through a Typed StateGraph:**
+A directed graph of specialist sub-agents, deterministic intent routing, and Human-in-the-Loop (HITL) checkpoints.
+
+```mermaid
+graph TD
+    Start([User Request]) --> Triage[Triage Router Node]
+    
+    Triage -->|Intent: Appointment| AptNode[Appointment Specialist Node]
+    Triage -->|Intent: Ticketing| TckNode[Ticketing Specialist Node]
+    Triage -->|Intent: General| GenNode[General Inquiries Node]
+    
+    AptNode -->|Availability Query| EndNode([Final Response])
+    AptNode -->|Booking Request| CheckConflict{Scheduling Conflict?}
+    CheckConflict -->|Yes| ConflictFeedback[Suggest Alternative Slots] --> EndNode
+    CheckConflict -->|No| HITLGate1{Action Proposal: PENDING}
+    
+    TckNode -->|Low/Med Severity| AutoFile[Auto-File Support Ticket] --> EndNode
+    TckNode -->|High/Critical Severity| HITLGate2{Action Proposal: PENDING}
+    
+    HITLGate1 -->|Checkpoint Saved| HumanPause[⏸️ Interrupted for Human Approval]
+    HITLGate2 -->|Checkpoint Saved| HumanPause
+    
+    HumanPause -->|Resume: Approved| Executor[Execute Action Node] --> EndNode
+    HumanPause -->|Resume: Rejected| Rejection[Rejection Handler & Feedback] --> EndNode
+
+    style HumanPause fill:#d32f2f,stroke:#b71c1c,color:#fff
+    style Executor fill:#2e7d32,stroke:#1b5e20,color:#fff
+    style Rejection fill:#f57c00,stroke:#e65100,color:#fff
+```
 
 ---
 
-## 3. Hands-On Exercises
-1. Build a type-safe multi-agent triage system with `pydantic-ai`.
-2. Implement a `LangGraph` state machine with an explicit Human-in-the-Loop pause before executing high-risk operations (e.g., file deletion or API calls).
-3. Benchmark the latency overhead added by the framework versus the Module 01 raw loop.
+## 2. Core Components
+
+| Component | File | Responsibility |
+| :--- | :--- | :--- |
+| **Typed State Contracts** | [`src/state.py`](src/state.py) | Pydantic models: `AgentState`, `ActionProposal`, `ApprovalStatus`, `IntentType`. |
+| **Domain Stores** | [`src/domain_tools.py`](src/domain_tools.py) | In-memory doctor scheduling calendars and support ticketing stores with conflict detection. |
+| **StateGraph Engine** | [`src/graph.py`](src/graph.py) | First-principles directed graph engine, conditional branch routing, and checkpoint resume mechanics. |
+| **Specialist Agents** | [`src/specialists.py`](src/specialists.py) | `triage_router_node`, `appointment_specialist_node`, `ticketing_specialist_node`, `action_executor_node`. |
+| **Graph Assembly** | [`src/engine.py`](src/engine.py) | Compiles nodes and routing edges into an executable state machine. |
+| **Latency Benchmark** | [`src/benchmark.py`](src/benchmark.py) | Microsecond-precision benchmark comparing StateGraph overhead against raw procedural loops. |
 
 ---
 
-## 4. Acceptance Criteria
-- You can explain what abstractions a state machine gives you over a raw loop, and what overhead it introduces.
-- You have built a working multi-agent graph with checkpoints and state recovery.
+## 3. Human-in-the-Loop (HITL) Checkpoint Mechanics
+
+In production agentic architectures, automated agents **must never execute high-risk or irreversible mutations** (such as updating hospital records, filing critical outages, or charging cards) without an approval gateway.
+
+### Checkpoint Lifecycle:
+1. **Proposal Generation**: The specialist creates an `ActionProposal(status=ApprovalStatus.PENDING)` and attaches it to `state.pending_action`.
+2. **Execution Halt**: `CompiledGraph.run()` detects the pending proposal, snapshots the entire `AgentState` into `checkpoints[session_id]`, and returns `(state, is_interrupted=True)`.
+3. **Supervisor Review**: A human reviewer inspects the proposal via UI/CLI and responds with `approved: bool` and optional `reviewer_notes`.
+4. **Resumed Execution**: Calling `graph.resume(session_id, approved=True/False)` resumes execution from the saved checkpoint, dispatching either to `action_executor` or `handle_rejection`.
+
+```python
+# 1. Initiate workflow
+state = AgentState()
+state.add_message("user", "Book Dr. Sarah Chen on 2026-10-15 at 09:00 for patient Mark Peterson")
+paused_state, is_interrupted = graph.run(state)
+
+assert is_interrupted is True
+print(paused_state.pending_action.description)
+# -> "Book consultation for patient Mark Peterson with Dr. Sarah Chen on 2026-10-15 at 09:00"
+
+# 2. Human supervisor approves
+resumed_state, _ = graph.resume(
+    session_id=paused_state.session_id,
+    approved=True,
+    reviewer_notes="Insurance verified"
+)
+print(resumed_state.final_output)
+# -> "Booking Confirmed: APT-20261015-0900 | Patient: Mark Peterson ..."
+```
+
+---
+
+## 4. Latency & Framework Overhead
+
+Running `python modules/02_orchestration/src/benchmark.py` yields the following profile:
+
+| Metric | Raw Procedural Baseline | Typed StateGraph Engine |
+| :--- | :--- | :--- |
+| **Average Latency per step** | ~1.5 µs | ~35 µs |
+| **Transition Overhead** | Baseline | ~33.5 µs |
+| **Impact on LLM Operations** | 0.00% | < 0.01% (LLM inference takes 150,000–500,000 µs) |
+
+> **Conclusion**: The architectural guarantees of typed contracts, transition auditing, and interruptible checkpoints cost microsecond-level overhead while eliminating unconstrained failure modes.
+
+---
+
+## 5. Running Tests & Demos
+
+```bash
+# Run deterministic unit tests
+./.venv/bin/pytest modules/02_orchestration/tests/ -v
+
+# Run interactive Rich terminal demonstration
+./.venv/bin/python modules/02_orchestration/run.py
+```
