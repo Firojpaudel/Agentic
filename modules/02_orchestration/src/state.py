@@ -1,7 +1,9 @@
 """
 Module 02: Typed State Contracts and Action Schemas.
-Defines immutable state transitions, domain slot representations,
-and Human-in-the-Loop (HITL) approval schemas.
+Grounded in open-source reference implementations:
+- pydantic/pydantic-ai (Typed contracts, strict schema validation, dependency injection)
+- langchain-ai/langgraph (Stateful graphs, checkpoint persistence, interruptibility)
+- openai/openai-agents-python (Swarm handoffs and mutating guardrail primitives)
 """
 from __future__ import annotations
 
@@ -34,6 +36,38 @@ class SeverityLevel(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+
+class Role(str, Enum):
+    """Dialogue message role."""
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
+    TOOL = "tool"
+
+
+class ActionType(str, Enum):
+    """Domain action types requiring execution or review."""
+    BOOK_APPOINTMENT = "book_appointment"
+    CREATE_CRITICAL_TICKET = "create_critical_ticket"
+
+
+class NodeName(str, Enum):
+    """StateGraph node identifiers."""
+    TRIAGE = "triage"
+    APPOINTMENT_SPECIALIST = "appointment_specialist"
+    TICKETING_SPECIALIST = "ticketing_specialist"
+    GENERAL_HANDLER = "general_handler"
+    EXECUTE_ACTION = "execute_action"
+    HANDLE_REJECTION = "handle_rejection"
+    END = "__end__"
+
+
+class TicketCategory(str, Enum):
+    """Categorization for hospital support tickets."""
+    GENERAL_IT = "General IT"
+    BIOMEDICAL = "Biomedical Engineering"
+    BILLING = "Hospital Billing"
 
 
 class Message(BaseModel):
@@ -139,3 +173,11 @@ class AgentState(BaseModel):
             if msg.role == "user":
                 return msg.content
         return ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize state to standard dictionary (Pydantic v2 model_dump)."""
+        return self.model_dump()
+
+    def get_history(self) -> List[str]:
+        """Return transition audit history."""
+        return list(self.transition_history)
