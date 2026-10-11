@@ -18,6 +18,11 @@ TYPE_MAP = {
     bool: "boolean",
 }
 
+# Sandboxed execution boundaries (mini-swe-agent standard)
+DEFAULT_MAX_LINES: int = 50
+COMMAND_TIMEOUT_SECONDS: int = 10
+MAX_OUTPUT_CHARS: int = 2000
+
 class ToolRegistry:
     def __init__(self): 
         self._tools: dict[str, Callable] = {} 
@@ -79,8 +84,8 @@ def calculate(expression: str) -> str:
 
 
 @registry.register
-def read_file(filepath: str, max_lines: int = 50) -> str:
-    """Read the contents of a local file with max_lines truncation."""
+def read_file(filepath: str, max_lines: int = DEFAULT_MAX_LINES) -> str:
+    """Read the contents of a local file with line-based truncation."""
     try:
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
@@ -98,12 +103,16 @@ def run_command(command: str) -> str:
     """Run a shell command locally with timeout and output truncation."""
     try:
         proc = subprocess.run(
-            command, shell=True, capture_output=True, text=True, timeout=10
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=COMMAND_TIMEOUT_SECONDS,
         )
     except subprocess.TimeoutExpired:
-        return "Error: command timed out after 10 seconds"
+        return f"Error: command timed out after {COMMAND_TIMEOUT_SECONDS} seconds"
 
     output = proc.stdout + proc.stderr
-    if len(output) > 2000:
-        output = output[:2000] + "\n... [truncated]"
+    if len(output) > MAX_OUTPUT_CHARS:
+        output = output[:MAX_OUTPUT_CHARS] + "\n... [truncated]"
     return output
