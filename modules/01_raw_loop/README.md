@@ -8,24 +8,39 @@
 
 An agent is fundamentally a stateful control loop:
 
-```
-                  +----------------------+
-                  |    User Objective    |
-                  +----------+-----------+
-                             |
-            +----------------v----------------+
-      +---->| 1. LLM Prompt + History Buffer  |
-      |     +----------------+----------------+
-      |                      | Generates Thought + Tool Call
-      |     +----------------v----------------+
-      |     | 2. Tool Dispatcher & Execution  |
-      |     +----------------+----------------+
-      |                      | Generates Raw Observation
-      |     +----------------v----------------+
-      |     | 3. State & History Append       |
-      |     +----------------+----------------+
-      |                      |
-      +---------- Does it stop or continue? --+
+```mermaid
+graph TD
+    User(["&nbsp;User Task&nbsp;"]) --> Init["&nbsp;Initialize State&nbsp;<br/>&nbsp;&amp; Buffer&nbsp;"]
+    
+    Init --> Prompt["&nbsp;Build Prompt&nbsp;<br/>&nbsp;+ Schemas&nbsp;"]
+    
+    Prompt --> LLM{"&nbsp;Inference&nbsp;<br/>&nbsp;(Zero-Cost API)&nbsp;"}
+    
+    LLM -->|Final Response| Done(["&nbsp;Return Solution&nbsp;"])
+    
+    LLM -->|Tool Call| Dispatch["&nbsp;Safe Tool&nbsp;<br/>&nbsp;Dispatcher&nbsp;"]
+    
+    Dispatch --> Exec["&nbsp;Execute Tool&nbsp;<br/>&nbsp;(Sandboxed)&nbsp;"]
+    
+    Exec --> Sandbox{"&nbsp;Safe Run?&nbsp;"}
+    
+    Sandbox -->|Success| Obs["&nbsp;Capture Raw&nbsp;<br/>&nbsp;Observation&nbsp;"]
+    Sandbox -->|Exception| Err["&nbsp;Capture Error&nbsp;<br/>&nbsp;(Self-Correct)&nbsp;"]
+    
+    Obs --> Append["&nbsp;Append to&nbsp;<br/>&nbsp;History Buffer&nbsp;"]
+    Err --> Append
+    
+    Append --> CheckTurns{"&nbsp;Turn &lt; Max?&nbsp;"}
+    CheckTurns -->|Yes| Prompt
+    CheckTurns -->|No / Limit| MaxErr(["&nbsp;Max Turns&nbsp;<br/>&nbsp;Reached&nbsp;"])
+
+    style User fill:#1565c0,stroke:#0d47a1,color:#fff
+    style LLM fill:#6a1b9a,stroke:#4a148c,color:#fff
+    style Dispatch fill:#e65100,stroke:#bf360c,color:#fff
+    style Obs fill:#2e7d32,stroke:#1b5e20,color:#fff
+    style Err fill:#c62828,stroke:#b71c1c,color:#fff
+    style Done fill:#2e7d32,stroke:#1b5e20,color:#fff
+    style MaxErr fill:#c62828,stroke:#b71c1c,color:#fff
 ```
 
 Frameworks add abstraction, but in production, most failure modes happen inside this basic loop:

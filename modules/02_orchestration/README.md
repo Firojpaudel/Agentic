@@ -16,25 +16,25 @@ A directed graph of specialist sub-agents, deterministic intent routing, and Hum
 
 ```mermaid
 graph TD
-    Start(["User Request"]) --> Triage["Triage Router Node"]
+    Start(["&nbsp;User Request&nbsp;"]) --> Triage["&nbsp;Triage Router&nbsp;<br/>&nbsp;Node&nbsp;"]
     
-    Triage -->|Intent: Appointment| AptNode["Appointment<br/>Specialist Node"]
-    Triage -->|Intent: Ticketing| TckNode["Ticketing<br/>Specialist Node"]
-    Triage -->|Intent: General| GenNode["General Inquiries<br/>Node"]
+    Triage -->|Intent: Appointment| AptNode["&nbsp;Appointment&nbsp;<br/>&nbsp;Specialist&nbsp;"]
+    Triage -->|Intent: Ticketing| TckNode["&nbsp;Ticketing&nbsp;<br/>&nbsp;Specialist&nbsp;"]
+    Triage -->|Intent: General| GenNode["&nbsp;General Help&nbsp;<br/>&nbsp;Node&nbsp;"]
     
-    AptNode -->|Availability Query| EndNode(["Final Response"])
-    AptNode -->|Booking Request| CheckConflict{"Scheduling<br/>Conflict?"}
-    CheckConflict -->|Yes| ConflictFeedback["Suggest Alternative<br/>Slots"] --> EndNode
-    CheckConflict -->|No| HITLGate1{"Action Proposal:<br/>PENDING"}
+    AptNode -->|Availability Query| EndNode(["&nbsp;Final Response&nbsp;"])
+    AptNode -->|Booking Request| CheckConflict{"&nbsp;Scheduling&nbsp;<br/>&nbsp;Conflict?&nbsp;"}
+    CheckConflict -->|Yes| ConflictFeedback["&nbsp;Suggest&nbsp;<br/>&nbsp;Alternative&nbsp;<br/>&nbsp;Slots&nbsp;"] --> EndNode
+    CheckConflict -->|No| HITLGate1{"&nbsp;Proposal:&nbsp;<br/>&nbsp;PENDING&nbsp;"}
     
-    TckNode -->|Low/Med Severity| AutoFile["Auto-File Support<br/>Ticket"] --> EndNode
-    TckNode -->|High/Critical Severity| HITLGate2{"Action Proposal:<br/>PENDING"}
+    TckNode -->|Low/Med Severity| AutoFile["&nbsp;Auto-File&nbsp;<br/>&nbsp;Support&nbsp;<br/>&nbsp;Ticket&nbsp;"] --> EndNode
+    TckNode -->|High/Critical Severity| HITLGate2{"&nbsp;Proposal:&nbsp;<br/>&nbsp;PENDING&nbsp;"}
     
-    HITLGate1 -->|Checkpoint Saved| HumanPause["⏸️ Interrupted for<br/>Human Approval"]
+    HITLGate1 -->|Checkpoint Saved| HumanPause["&nbsp;⏸️ Paused for&nbsp;<br/>&nbsp;Approval&nbsp;"]
     HITLGate2 -->|Checkpoint Saved| HumanPause
     
-    HumanPause -->|Resume: Approved| Executor["Execute Action<br/>Node"] --> EndNode
-    HumanPause -->|Resume: Rejected| Rejection["Rejection Handler<br/>& Feedback"] --> EndNode
+    HumanPause -->|Resume: Approved| Executor["&nbsp;Execute&nbsp;<br/>&nbsp;Action Node&nbsp;"] --> EndNode
+    HumanPause -->|Resume: Rejected| Rejection["&nbsp;Rejection&nbsp;<br/>&nbsp;Handler&nbsp;<br/>&nbsp;&amp; Feedback&nbsp;"] --> EndNode
 
     style HumanPause fill:#d32f2f,stroke:#b71c1c,color:#fff
     style Executor fill:#2e7d32,stroke:#1b5e20,color:#fff

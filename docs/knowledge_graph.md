@@ -8,45 +8,45 @@ This document is the persistent memory and architecture map for the Agentic Syst
 
 ```mermaid
 graph TD
-    subgraph UserInterface ["Input and Voice Layer"]
-        VI["Voice Audio Stream"] --> STT["Speech-to-Text"]
-        TI["Terminal / CLI Input"] --> SharedUI["shared.console"]
-        STT --> ST["State Input"]
+    subgraph UserInterface ["&nbsp;Input and Voice Layer&nbsp;"]
+        VI["&nbsp;Voice Stream&nbsp;<br/>&nbsp;(Audio)&nbsp;"] --> STT["&nbsp;Speech to&nbsp;<br/>&nbsp;Text (STT)&nbsp;"]
+        TI["&nbsp;Terminal CLI&nbsp;<br/>&nbsp;Input&nbsp;"] --> SharedUI["&nbsp;shared.console&nbsp;<br/>&nbsp;(UI)&nbsp;"]
+        STT --> ST["&nbsp;State Input&nbsp;"]
         TI --> ST
     end
 
-    subgraph OrchestrationLayer ["Module 02: State Graph"]
-        ST --> TG["Triage Router Node"]
-        TG -->|Booking Intent| BA["Appointment<br/>Specialist"]
-        TG -->|Meeting Intent| MA["Meeting<br/>Specialist"]
-        TG -->|Support Intent| TA["Ticketing<br/>Specialist"]
-        TG -->|General Coding| CA["Code & Math<br/>Specialist"]
+    subgraph OrchestrationLayer ["&nbsp;Module 02: State Graph&nbsp;"]
+        ST --> TG["&nbsp;Triage Router&nbsp;<br/>&nbsp;Node&nbsp;"]
+        TG -->|Booking Intent| BA["&nbsp;Appointment&nbsp;<br/>&nbsp;Specialist&nbsp;"]
+        TG -->|Meeting Intent| MA["&nbsp;Meeting&nbsp;<br/>&nbsp;Specialist&nbsp;"]
+        TG -->|Support Intent| TA["&nbsp;Ticketing&nbsp;<br/>&nbsp;Specialist&nbsp;"]
+        TG -->|General Coding| CA["&nbsp;Code & Math&nbsp;<br/>&nbsp;Specialist&nbsp;"]
     end
 
-    subgraph ToolsAndProtocols ["Module 01 & 03: Tools & MCP"]
-        TR["Tool Registry"]
-        BA -->|Book / Check Slots| HT["Hospital Booking<br/>Tool"]
-        MA -->|Generate Links| GM["Calendar & Meet<br/>Tool"]
-        TA -->|Create / Update| TT["Ticketing Tool"]
-        CA -->|Exec / Compute| CT["calculate /<br/>run_command"]
+    subgraph ToolsAndProtocols ["&nbsp;Module 01 & 03: Tools & MCP&nbsp;"]
+        TR["&nbsp;Tool Registry&nbsp;"]
+        BA -->|Book / Check Slots| HT["&nbsp;Hospital&nbsp;<br/>&nbsp;Booking Tool&nbsp;"]
+        MA -->|Generate Links| GM["&nbsp;Calendar&nbsp;<br/>&nbsp;&amp; Meet Tool&nbsp;"]
+        TA -->|Create / Update| TT["&nbsp;Ticketing&nbsp;<br/>&nbsp;Tool&nbsp;"]
+        CA -->|Exec / Compute| CT["&nbsp;calculate /&nbsp;<br/>&nbsp;run_cmd&nbsp;"]
         TR -.-> HT
         TR -.-> GM
         TR -.-> TT
         TR -.-> CT
     end
 
-    subgraph SafetyAndDurability ["Module 02 & 05: HITL & Resilience"]
-        HT -->|Critical Action| HITL["Human Approval<br/>Checkpoint"]
+    subgraph SafetyAndDurability ["&nbsp;Module 02 & 05: HITL & Resilience&nbsp;"]
+        HT -->|Critical Action| HITL["&nbsp;Human Approval&nbsp;<br/>&nbsp;Checkpoint&nbsp;"]
         TT -->|Critical Action| HITL
-        HITL -->|Approved| COMMIT["Execute External<br/>API"]
-        HITL -->|Rejected| FEEDBACK["Self-Correction<br/>Loop"]
-        COMMIT --> MEM["Module 04:<br/>Tiered Memory"]
+        HITL -->|Approved| COMMIT["&nbsp;Execute API&nbsp;"]
+        HITL -->|Rejected| FEEDBACK["&nbsp;Self-Correct&nbsp;<br/>&nbsp;Loop&nbsp;"]
+        COMMIT --> MEM["&nbsp;Tiered&nbsp;<br/>&nbsp;Memory&nbsp;"]
     end
 
-    subgraph OutputLayer ["Voice and Text Output"]
-        MEM --> SYNTH["Final Synthesis"]
-        SYNTH --> TTS["Text-to-Speech<br/>Engine"]
-        SYNTH --> OUT["shared.console<br/>Markdown"]
+    subgraph OutputLayer ["&nbsp;Voice and Text Output&nbsp;"]
+        MEM --> SYNTH["&nbsp;Final&nbsp;<br/>&nbsp;Synthesis&nbsp;"]
+        SYNTH --> TTS["&nbsp;Text to Speech&nbsp;<br/>&nbsp;(TTS)&nbsp;"]
+        SYNTH --> OUT["&nbsp;Console&nbsp;<br/>&nbsp;Markdown&nbsp;"]
     end
 
     style CT fill:#2e7d32,stroke:#1b5e20,color:#fff
