@@ -35,11 +35,8 @@ class HospitalScheduler:
         ]
 
     def list_doctors(self) -> List[Dict[str, str]]:
-        """List distinct doctors and their medical departments."""
-        doctors = {}
-        for s in self._slots:
-            if s.doctor_name not in doctors:
-                doctors[s.doctor_name] = s.department
+        """List distinct doctors and their medical departments in O(N)."""
+        doctors = {s.doctor_name: s.department for s in self._slots}
         return [{"doctor": doc, "department": dept} for doc, dept in doctors.items()]
 
     def check_availability(self, doctor_name: str, date: str) -> List[str]:
@@ -89,15 +86,30 @@ class TicketStore:
     def __init__(self):
         self._tickets: Dict[str, Ticket] = {}
 
+    SEVERITY_RULES = (
+        (
+            SeverityLevel.CRITICAL,
+            ("cardiac monitor", "life support", "data breach", "emergency", "system crash", "critical"),
+            "Identified life-critical or catastrophic system failure keywords.",
+        ),
+        (
+            SeverityLevel.HIGH,
+            ("database down", "api timeout", "outage", "billing error", "cannot login", "urgent"),
+            "Identified blocking service disruption or financial defect.",
+        ),
+        (
+            SeverityLevel.MEDIUM,
+            ("slow", "bug", "formatting", "error message", "reschedule", "portal glitch"),
+            "Identified non-blocking functional anomaly.",
+        ),
+    )
+
     def classify_severity(self, title: str, description: str) -> tuple[SeverityLevel, str]:
         """Rule-based severity classifier with domain heuristics."""
         content = f"{title} {description}".lower()
-        if any(w in content for w in ["cardiac monitor", "life support", "data breach", "emergency", "system crash", "critical"]):
-            return SeverityLevel.CRITICAL, "Identified life-critical or catastrophic system failure keywords."
-        elif any(w in content for w in ["database down", "api timeout", "outage", "billing error", "cannot login", "urgent"]):
-            return SeverityLevel.HIGH, "Identified blocking service disruption or financial defect."
-        elif any(w in content for w in ["slow", "bug", "formatting", "error message", "reschedule", "portal glitch"]):
-            return SeverityLevel.MEDIUM, "Identified non-blocking functional anomaly."
+        for level, keywords, rationale in self.SEVERITY_RULES:
+            if any(w in content for w in keywords):
+                return level, rationale
         return SeverityLevel.LOW, "Routine inquiry or minor cosmetic issue."
 
     def create_ticket(
