@@ -6,6 +6,7 @@ from __future__ import annotations
 
 try:
     from .graph import StateGraph, CompiledGraph
+    from .state import NodeName
     from .specialists import (
         triage_router_node,
         route_by_intent,
@@ -17,6 +18,7 @@ try:
     )
 except ImportError:
     from graph import StateGraph, CompiledGraph
+    from state import NodeName
     from specialists import (
         triage_router_node,
         route_by_intent,
@@ -30,24 +32,25 @@ except ImportError:
 
 def create_orchestration_graph() -> CompiledGraph:
     """Build and compile the multi-agent clinical orchestration graph."""
-    graph = StateGraph(entry_node="triage")
+    graph = StateGraph(entry_node=NodeName.TRIAGE)
 
-    # Register nodes
-    graph.add_node("triage", triage_router_node)
-    graph.add_node("appointment_specialist", appointment_specialist_node)
-    graph.add_node("ticketing_specialist", ticketing_specialist_node)
-    graph.add_node("general_handler", general_handler_node)
-    graph.add_node("execute_action", action_executor_node)
-    graph.add_node("handle_rejection", rejection_handler_node)
+    # Register specialist nodes
+    graph.add_node(NodeName.TRIAGE, triage_router_node)
+    graph.add_node(NodeName.APPOINTMENT_SPECIALIST, appointment_specialist_node)
+    graph.add_node(NodeName.TICKETING_SPECIALIST, ticketing_specialist_node)
+    graph.add_node(NodeName.GENERAL_HANDLER, general_handler_node)
+    graph.add_node(NodeName.EXECUTE_ACTION, action_executor_node)
+    graph.add_node(NodeName.HANDLE_REJECTION, rejection_handler_node)
 
-    # Routing from triage
-    graph.add_conditional_edge("triage", route_by_intent)
+    # Dynamic routing from triage based on classified intent
+    graph.add_conditional_edge(NodeName.TRIAGE, route_by_intent)
 
-    # Terminal transitions for leaves
-    graph.add_edge("general_handler", "__end__")
-    graph.add_edge("execute_action", "__end__")
-    graph.add_edge("handle_rejection", "__end__")
-    graph.add_edge("appointment_specialist", "__end__")
-    graph.add_edge("ticketing_specialist", "__end__")
+    # Terminal transitions for leaf nodes
+    graph.add_edge(NodeName.GENERAL_HANDLER, NodeName.END)
+    graph.add_edge(NodeName.EXECUTE_ACTION, NodeName.END)
+    graph.add_edge(NodeName.HANDLE_REJECTION, NodeName.END)
+    graph.add_edge(NodeName.APPOINTMENT_SPECIALIST, NodeName.END)
+    graph.add_edge(NodeName.TICKETING_SPECIALIST, NodeName.END)
 
     return graph.compile()
+
